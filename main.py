@@ -59,11 +59,15 @@ if not "initialized" in st.session_state:
 # タイトル表示
 cn.display_app_title()
 
-# モード表示
-cn.display_select_mode()
 
-# AIメッセージの初期表示
+# サイドバー表示
+cn.display_sidebar()
+
+# メイン画面にタイトルとAIメッセージのみ中央表示
+st.markdown(f"<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 40vh;'>", unsafe_allow_html=True)
+cn.display_app_title()
 cn.display_initial_ai_message()
+st.markdown("</div>", unsafe_allow_html=True)
 
 
 ############################################################

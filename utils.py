@@ -110,7 +110,9 @@ def get_llm_response(chat_message):
 
     # LLMへのリクエストとレスポンス取得
     llm_response = chain.invoke({"input": chat_message, "chat_history": st.session_state.chat_history})
-    # LLMレスポンスを会話履歴に追加
-    st.session_state.chat_history.extend([HumanMessage(content=chat_message), llm_response["answer"]])
-
+    from langchain.schema import AIMessage
+    st.session_state.chat_history.extend([
+        HumanMessage(content=chat_message),
+        AIMessage(content=llm_response["answer"])
+    ])
     return llm_response

@@ -121,10 +121,10 @@ def initialize_retriever():
     # 埋め込みモデルの用意
     embeddings = OpenAIEmbeddings()
     
-    # チャンク分割用のオブジェクトを作成
+    # チャンク分割用のオブジェクトを作成（定数を利用）
     text_splitter = CharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=50,
+        chunk_size=ct.CHUNK_SIZE,
+        chunk_overlap=ct.CHUNK_OVERLAP,
         separator="\n"
     )
 
@@ -134,8 +134,8 @@ def initialize_retriever():
     # ベクターストアの作成
     db = Chroma.from_documents(splitted_docs, embedding=embeddings)
 
-    # ベクターストアを検索するRetrieverの作成
-    st.session_state.retriever = db.as_retriever(search_kwargs={"k": 3})
+    # ベクターストアを検索するRetrieverの作成（関連ドキュメント数を定数で指定）
+    st.session_state.retriever = db.as_retriever(search_kwargs={"k": ct.RETRIEVER_TOP_K})
 
 
 def initialize_session_state():
@@ -209,15 +209,33 @@ def file_load(path, docs_all):
     """
     # ファイルの拡張子を取得
     file_extension = os.path.splitext(path)[1]
-    # ファイル名（拡張子を含む）を取得
     file_name = os.path.basename(path)
 
     # 想定していたファイル形式の場合のみ読み込む
     if file_extension in ct.SUPPORTED_EXTENSIONS:
-        # ファイルの拡張子に合ったdata loaderを使ってデータ読み込み
-        loader = ct.SUPPORTED_EXTENSIONS[file_extension](path)
-        docs = loader.load()
-        docs_all.extend(docs)
+        # CSVの場合は全行を1ドキュメントにまとめる
+        if file_extension == ".csv":
+            import csv
+            from langchain_core.documents import Document
+            with open(path, encoding="utf-8") as f:
+                reader = csv.reader(f)
+                rows = list(reader)
+                header = rows[0]
+                body = [dict(zip(header, row)) for row in rows[1:]]
+                # 1人ごとに区切りとラベルを付与してテキスト化
+                content = "\n---\n".join([
+                    "\n".join([f"{k}: {v}" for k, v in item.items()]) for item in body
+                ])
+                # 先頭にタイトルを追加
+                # 人事部キーワードを強調
+                content = f"【人事部社員情報 一覧】\n{content}"
+                doc = Document(page_content=content, metadata={"source": file_name})
+                docs_all.append(doc)
+        else:
+            # それ以外は従来通り
+            loader = ct.SUPPORTED_EXTENSIONS[file_extension](path)
+            docs = loader.load()
+            docs_all.extend(docs)
 
 
 def adjust_string(s):

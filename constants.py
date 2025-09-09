@@ -1,3 +1,10 @@
+# ==========================================
+# RAG・チャンク分割用パラメータ
+# ==========================================
+RETRIEVER_TOP_K = 10
+CHUNK_SIZE = 5000
+# チャンク分割時のオーバーラップ
+CHUNK_OVERLAP = 50
 """
 このファイルは、固定の文字列や数値などのデータを変数として一括管理するファイルです。
 """
@@ -50,7 +57,8 @@ RAG_TOP_FOLDER_PATH = "./data"
 SUPPORTED_EXTENSIONS = {
     ".pdf": PyMuPDFLoader,
     ".docx": Docx2txtLoader,
-    ".csv": lambda path: CSVLoader(path, encoding="utf-8")
+    ".csv": lambda path: CSVLoader(path, encoding="utf-8"),
+    ".txt": lambda path: TextLoader(path, encoding="utf-8")
 }
 WEB_URL_LOAD_TARGETS = [
     "https://generative-ai.web-camp.io/"
@@ -86,6 +94,7 @@ SYSTEM_PROMPT_INQUIRY = """
     5. マークダウン記法で回答する際にhタグの見出しを使う場合、最も大きい見出しをh3としてください。
     6. 複雑な質問の場合、各項目についてそれぞれ詳細に回答してください。
     7. 必要と判断した場合は、以下の文脈に基づかずとも、一般的な情報を回答してください。
+    8. 「人事部に所属している従業員情報を一覧化して」と問われた場合は、社員名簿.csvに記載されている人事部全員分の情報を表形式で必ず表示してください。一部のみ抜粋せず、全員分を漏れなく表示すること。
 
     {context}
 """
